@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.content.withStyledAttributes
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -41,6 +42,30 @@ class DialView @JvmOverloads constructor(
         typeface = Typeface.create( "", Typeface.BOLD)
     }
 
+    private var fanSpeedLowColor = 0
+    private var fanSpeedMediumColor = 0
+    private var fanSeedMaxColor = 0
+
+    init {
+        isClickable = true
+
+        context.withStyledAttributes(attrs, R.styleable.DialView) {
+            fanSpeedLowColor = getColor(R.styleable.DialView_fanColor1, 0)
+            fanSpeedMediumColor = getColor(R.styleable.DialView_fanColor2, 0)
+            fanSeedMaxColor = getColor(R.styleable.DialView_fanColor3, 0)
+        }
+    }
+
+    override fun performClick(): Boolean {
+        if (super.performClick()) return true
+
+        fanSpeed = fanSpeed.next()
+        contentDescription = resources.getString(fanSpeed.label)
+
+        invalidate()
+        return true
+    }
+
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         radius = (min(width, height) / 2.0 * 0.8).toFloat()
     }
@@ -57,7 +82,14 @@ class DialView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         // Set dial background color to green if selection not off.
-        paint.color = if (fanSpeed == FanSpeed.OFF) Color.GRAY else Color.GREEN
+//        paint.color = if (fanSpeed == FanSpeed.OFF) Color.GRAY else Color.GREEN
+
+        paint.color = when (fanSpeed) {
+            FanSpeed.OFF -> Color.GRAY
+            FanSpeed.LOW -> fanSpeedLowColor
+            FanSpeed.MEDIUM -> fanSpeedMediumColor
+            FanSpeed.HIGH -> fanSeedMaxColor
+        } as Int
 
         // Draw the dial.
         canvas.drawCircle((width / 2).toFloat(), (height / 2).toFloat(), radius, paint)
@@ -75,19 +107,5 @@ class DialView @JvmOverloads constructor(
             val label = resources.getString(i.label)
             canvas.drawText(label, pointPosition.x, pointPosition.y, paint)
         }
-    }
-
-    init {
-        isClickable = true
-    }
-
-    override fun performClick(): Boolean {
-        if (super.performClick()) return true
-
-        fanSpeed = fanSpeed.next()
-        contentDescription = resources.getString(fanSpeed.label)
-
-        invalidate()
-        return true
     }
 }
